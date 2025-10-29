@@ -1,0 +1,28 @@
+# Variables de entorno sensibles
+.env
+
+# Archivos de configuración local
+config_local.txt
+ejecutar_bot.bat
+
+# Archivos temporales
+temp_function.txt
+*.log
+
+# Archivos de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Sistema
+.DS_Store
+Thumbs.db
