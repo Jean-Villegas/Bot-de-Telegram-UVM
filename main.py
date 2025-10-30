@@ -365,7 +365,7 @@ async def comando_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     try:
         # Verificar conexión con Telegram
-        bot = app.bot
+        bot = bot_global if bot_global else app.bot
         me = await bot.get_me()
         
         # Verificar conexión con Moodle
@@ -399,7 +399,10 @@ async def comando_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
     except Exception as e:
         logger.error(f"Error en comando /status: {e}")
-        await update.message.reply_text("❌ Error al verificar el estado del bot.")
+        logger.error(f"Tipo de error: {type(e).__name__}")
+        logger.error(f"Bot global disponible: {bot_global is not None}")
+        logger.error(f"App disponible: {app is not None}")
+        await update.message.reply_text(f"❌ Error al verificar el estado del bot: {str(e)[:100]}")
 
 # === COMANDO /start ===
 async def comando_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
