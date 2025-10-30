@@ -96,48 +96,60 @@ app = None
 
 async def obtener_tareas_calendario(dias_limite=7):
     """Obtiene las tareas del calendario de Moodle filtradas por días"""
-    try:
-        logger.info("Obteniendo calendario de Moodle...")
+    max_intentos = 3
+    timeout_inicial = 10.0
+    
+    for intento in range(max_intentos):
+        try:
+            logger.info(f"Obteniendo calendario de Moodle... (intento {intento + 1}/{max_intentos})")
+            
+            # Hacer la petición asíncrona con timeout progresivo
+            timeout_actual = timeout_inicial + (intento * 5)  # 10s, 15s, 20s
+            async with httpx.AsyncClient(timeout=timeout_actual) as client:
+                r = await client.get(MOODLE_URL)
+                r.raise_for_status()  # Verificar que la respuesta sea exitosa
         
-        # Hacer la petición asíncrona con timeout reducido
-        async with httpx.AsyncClient(timeout=8.0) as client:
-            r = await client.get(MOODLE_URL)
-            r.raise_for_status()  # Verificar que la respuesta sea exitosa
-        
-        calendar = Calendar(r.text)
+            calendar = Calendar(r.text)
 
-        hoy = datetime.now(tz).date()
-        tareas = []
-        
-        for evento in calendar.events:
-            if evento.begin is None:
-                continue
-                
-            fecha_entrega = evento.begin.astimezone(tz).date()
-            dias_restantes = (fecha_entrega - hoy).days
+            hoy = datetime.now(tz).date()
+            tareas = []
+            
+            for evento in calendar.events:
+                if evento.begin is None:
+                    continue
+                    
+                fecha_entrega = evento.begin.astimezone(tz).date()
+                dias_restantes = (fecha_entrega - hoy).days
 
-            # Filtrar por días límite
-            if 0 <= dias_restantes <= dias_limite:
-                nombre_evento = str(evento.name) if evento.name else "Sin título"
-                descripcion = str(evento.description) if hasattr(evento, 'description') and evento.description else ""
-                categorias = evento.categories if hasattr(evento, 'categories') and evento.categories else set()
-                
-                materia = extraer_materia(nombre_evento, descripcion, categorias)
-                
-                tareas.append({
-                    'nombre': nombre_evento,
-                    'materia': materia,
-                    'fecha_entrega': fecha_entrega,
-                    'dias_restantes': dias_restantes
-                })
+                # Filtrar por días límite
+                if 0 <= dias_restantes <= dias_limite:
+                    nombre_evento = str(evento.name) if evento.name else "Sin título"
+                    descripcion = str(evento.description) if hasattr(evento, 'description') and evento.description else ""
+                    categorias = evento.categories if hasattr(evento, 'categories') and evento.categories else set()
+                    
+                    materia = extraer_materia(nombre_evento, descripcion, categorias)
+                    
+                    tareas.append({
+                        'nombre': nombre_evento,
+                        'materia': materia,
+                        'fecha_entrega': fecha_entrega,
+                        'dias_restantes': dias_restantes
+                    })
         
-        # Ordenar por días restantes
-        tareas.sort(key=lambda x: x['dias_restantes'])
-        return tareas
-        
-    except Exception as e:
-        logger.error(f"Error al obtener calendario: {e}")
-        return []
+            # Ordenar por días restantes
+            tareas.sort(key=lambda x: x['dias_restantes'])
+            logger.info(f"✅ Calendario obtenido exitosamente: {len(tareas)} tareas encontradas")
+            return tareas
+            
+        except Exception as e:
+            logger.warning(f"⚠️ Intento {intento + 1} falló: {e}")
+            if intento < max_intentos - 1:
+                tiempo_espera = (intento + 1) * 2  # 2s, 4s
+                logger.info(f"🔄 Reintentando en {tiempo_espera} segundos...")
+                await asyncio.sleep(tiempo_espera)
+            else:
+                logger.error(f"❌ Error al obtener calendario después de {max_intentos} intentos: {e}")
+                return []
 
 # === COMANDO /tareas ===
 async def comando_tareas(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -311,8 +323,13 @@ async def enviar_recordatorios_automaticos():
                 f"⏰ Faltan *{dias} día(s)* para entregar."
             )
             
-            # Enviar solo al chat personal para recordatorios automáticos
-            await bot.send_message(chat_id="6632759708", text=mensaje, parse_mode="Markdown")
+            # Enviar recordatorios a todos los chats autorizados
+            for chat_id in AUTHORIZED_CHATS:
+                try:
+                    await bot.send_message(chat_id=chat_id, text=mensaje, parse_mode="Markdown")
+                    logger.info(f"Recordatorio enviado a chat {chat_id}")
+                except Exception as e:
+                    logger.error(f"Error enviando recordatorio a chat {chat_id}: {e}")
             logger.info(f"Recordatorio automático enviado: {tarea['materia']} - {tarea['nombre']}")
             
     except Exception as e:
