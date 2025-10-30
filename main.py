@@ -383,7 +383,10 @@ async def comando_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Zona horaria de Venezuela (UTC-4)
         tz_venezuela = timezone(timedelta(hours=-4))
         ahora = datetime.datetime.now(tz_venezuela)
-        proximo_recordatorio = f"Mañana a las {HORA_RECORDATORIOS}"
+        # Convertir hora UTC a Venezuela para mostrar
+        hora_utc = HORA_RECORDATORIOS
+        hora_venezuela = f"{int(hora_utc.split(':')[0]) - 4:02d}:{hora_utc.split(':')[1]}"
+        proximo_recordatorio = f"Mañana a las {hora_venezuela} (Venezuela)"
         
         mensaje = (
             f"🤖 Estado del Bot\n\n"
