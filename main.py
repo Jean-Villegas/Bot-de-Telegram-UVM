@@ -16,7 +16,7 @@ import re
 # Cargar variables de entorno desde .env
 try:
     from dotenv import load_dotenv
-    load_dotenv()
+    # load_dotenv()  # Comentado temporalmente para debugging
 except ImportError:
     print("⚠️ python-dotenv no instalado. Usando variables de entorno del sistema.")
 
@@ -28,7 +28,7 @@ if not TELEGRAM_TOKEN:
 AUTHORIZED_CHATS = ["6632759708", "-5061302808"]
 MOODLE_URL = "https://virtual.uvm.edu.ve/virtual/calendar/export_execute.php?userid=2007&authtoken=5be6f027de4a2016615289e3ef3cb40c425c14ab&preset_what=all&preset_time=recentupcoming"
 
-HORA_RECORDATORIOS = "20:15"
+HORA_RECORDATORIOS = "13:00"
 DIAS_RECORDATORIO = [5, 3, 2, 1]
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -93,6 +93,7 @@ def extraer_materia(nombre_evento, descripcion, categorias=None):
     return "Materia no identificada"
 
 app = None
+bot_global = None
 
 async def obtener_tareas_calendario(dias_limite=7):
     """Obtiene las tareas del calendario de Moodle filtradas por días"""
@@ -284,7 +285,7 @@ async def comando_mes(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ Error al conectar con Moodle. Intenta nuevamente.")
 
 # === RECORDATORIOS AUTOMÁTICOS ===
-async def enviar_recordatorios_automaticos():
+async def enviar_recordatorios_automaticos(bot=None):
     """Envía recordatorios automáticos para tareas que vencen en 5, 3, 2, 1 días"""
     try:
         logger.info("Ejecutando verificación de recordatorios automáticos...")
@@ -298,7 +299,13 @@ async def enviar_recordatorios_automaticos():
             logger.info("No hay tareas que requieran recordatorio hoy")
             return
         
-        bot = app.bot
+        # Usar el bot pasado como parámetro o el global
+        if bot is None:
+            bot = bot_global
+        
+        if bot is None:
+            logger.error("No se pudo obtener el bot para enviar recordatorios")
+            return
         
         for tarea in tareas_recordatorio:
             dias = tarea['dias_restantes']
@@ -335,14 +342,14 @@ async def enviar_recordatorios_automaticos():
     except Exception as e:
         logger.error(f"Error en recordatorios automáticos: {e}")
 
-# === FUNCIÓN PARA VERIFICAR RECORDATORIOS (EJECUTA A LAS 13:00) ===
+# === FUNCIÓN PARA VERIFICAR RECORDATORIOS (EJECUTA A LAS 20:25) ===
 def verificar_recordatorios():
     """Función que se ejecuta en el scheduler para verificar recordatorios"""
     # Crear un nuevo loop de eventos para esta función
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     try:
-        loop.run_until_complete(enviar_recordatorios_automaticos())
+        loop.run_until_complete(enviar_recordatorios_automaticos(bot_global))
     finally:
         loop.close()
 
@@ -410,6 +417,8 @@ async def main():
     
     # Verificar conexión con reintentos
     bot = app.bot
+    global bot_global
+    bot_global = bot  # Asignar bot global para el scheduler
     
     logger.info("🔗 Verificando conexión con Telegram...")
     for intento in range(3):
