@@ -382,20 +382,20 @@ async def comando_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         proximo_recordatorio = f"Mañana a las {HORA_RECORDATORIOS}"
         
         mensaje = (
-            f"🤖 *Estado del Bot*\n\n"
-            f"📡 *Telegram:* ✅ Conectado como @{me.username}\n"
-            f"🌐 *Moodle:* {moodle_status}\n"
-            f"⏰ *Recordatorios:* {proximo_recordatorio}\n"
-            f"🕐 *Hora actual:* {ahora.strftime('%H:%M:%S')}\n"
-            f"📅 *Fecha:* {ahora.strftime('%d/%m/%Y')}\n\n"
-            f"💡 *Comandos disponibles:*\n"
-            f"• `/start` - Información del bot\n"
-            f"• `/tareas` - Tareas próximas 7 días\n"
-            f"• `/mes` - Tareas próximos 30 días\n"
-            f"• `/status` - Estado del bot"
+            f"🤖 Estado del Bot\n\n"
+            f"📡 Telegram: ✅ Conectado como @{me.username}\n"
+            f"🌐 Moodle: {moodle_status}\n"
+            f"⏰ Recordatorios: {proximo_recordatorio}\n"
+            f"🕐 Hora actual: {ahora.strftime('%H:%M:%S')}\n"
+            f"📅 Fecha: {ahora.strftime('%d/%m/%Y')}\n\n"
+            f"💡 Comandos disponibles:\n"
+            f"• /start - Información del bot\n"
+            f"• /tareas - Tareas próximas 7 días\n"
+            f"• /mes - Tareas próximos 30 días\n"
+            f"• /status - Estado del bot"
         )
         
-        await update.message.reply_text(mensaje, parse_mode="Markdown")
+        await update.message.reply_text(mensaje)
         
     except Exception as e:
         logger.error(f"Error en comando /status: {e}")
