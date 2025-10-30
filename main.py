@@ -28,7 +28,7 @@ if not TELEGRAM_TOKEN:
 AUTHORIZED_CHATS = ["6632759708", "-5061302808"]
 MOODLE_URL = "https://virtual.uvm.edu.ve/virtual/calendar/export_execute.php?userid=2007&authtoken=5be6f027de4a2016615289e3ef3cb40c425c14ab&preset_what=all&preset_time=recentupcoming"
 
-HORA_RECORDATORIOS = "20:44"
+HORA_RECORDATORIOS = "01:00"  # 1:00 AM UTC = 9:00 PM Venezuela
 DIAS_RECORDATORIO = [5, 3, 2, 1]
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -378,7 +378,11 @@ async def comando_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         # Información del sistema
         import datetime
-        ahora = datetime.datetime.now()
+        from datetime import timezone, timedelta
+        
+        # Zona horaria de Venezuela (UTC-4)
+        tz_venezuela = timezone(timedelta(hours=-4))
+        ahora = datetime.datetime.now(tz_venezuela)
         proximo_recordatorio = f"Mañana a las {HORA_RECORDATORIOS}"
         
         mensaje = (
