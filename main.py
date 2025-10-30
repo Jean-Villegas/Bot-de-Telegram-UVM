@@ -353,6 +353,54 @@ def verificar_recordatorios():
     finally:
         loop.close()
 
+# === COMANDO /status ===
+async def comando_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Comando para verificar el estado del bot"""
+    chat_id = update.effective_chat.id
+    
+    # Verificar que sea un chat autorizado
+    if str(chat_id) not in AUTHORIZED_CHATS:
+        await update.message.reply_text("❌ No tienes autorización para usar este bot.")
+        return
+    
+    try:
+        # Verificar conexión con Telegram
+        bot = app.bot
+        me = await bot.get_me()
+        
+        # Verificar conexión con Moodle
+        moodle_status = "❌ Error"
+        try:
+            tareas = await obtener_tareas_calendario(dias_limite=1)
+            moodle_status = f"✅ OK ({len(tareas)} tareas encontradas)"
+        except Exception as e:
+            moodle_status = f"❌ Error: {str(e)[:50]}..."
+        
+        # Información del sistema
+        import datetime
+        ahora = datetime.datetime.now()
+        proximo_recordatorio = f"Mañana a las {HORA_RECORDATORIOS}"
+        
+        mensaje = (
+            f"🤖 *Estado del Bot*\n\n"
+            f"📡 *Telegram:* ✅ Conectado como @{me.username}\n"
+            f"🌐 *Moodle:* {moodle_status}\n"
+            f"⏰ *Recordatorios:* {proximo_recordatorio}\n"
+            f"🕐 *Hora actual:* {ahora.strftime('%H:%M:%S')}\n"
+            f"📅 *Fecha:* {ahora.strftime('%d/%m/%Y')}\n\n"
+            f"💡 *Comandos disponibles:*\n"
+            f"• `/start` - Información del bot\n"
+            f"• `/tareas` - Tareas próximas 7 días\n"
+            f"• `/mes` - Tareas próximos 30 días\n"
+            f"• `/status` - Estado del bot"
+        )
+        
+        await update.message.reply_text(mensaje, parse_mode="Markdown")
+        
+    except Exception as e:
+        logger.error(f"Error en comando /status: {e}")
+        await update.message.reply_text("❌ Error al verificar el estado del bot.")
+
 # === COMANDO /start ===
 async def comando_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Comando de bienvenida"""
@@ -401,6 +449,7 @@ async def main():
     app.add_handler(CommandHandler("start", comando_start))
     app.add_handler(CommandHandler("tareas", comando_tareas))
     app.add_handler(CommandHandler("mes", comando_mes))
+    app.add_handler(CommandHandler("status", comando_status))
     
     # Programar recordatorios automáticos
     schedule.every().day.at(HORA_RECORDATORIOS).do(verificar_recordatorios)
@@ -414,6 +463,20 @@ async def main():
     # Iniciar scheduler en hilo separado
     scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
     scheduler_thread.start()
+    
+    # Función para mantener el bot activo (keep-alive)
+    async def keep_alive():
+        """Envía un ping cada 30 minutos para mantener el bot activo"""
+        while True:
+            await asyncio.sleep(1800)  # 30 minutos
+            try:
+                await bot.get_me()
+                logger.info("🔄 Keep-alive: Bot activo")
+            except Exception as e:
+                logger.warning(f"⚠️ Keep-alive falló: {e}")
+    
+    # Iniciar keep-alive en tarea separada
+    asyncio.create_task(keep_alive())
     
     # Verificar conexión con reintentos
     bot = app.bot
