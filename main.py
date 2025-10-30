@@ -385,7 +385,15 @@ async def comando_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ahora = datetime.datetime.now(tz_venezuela)
         # Convertir hora UTC a Venezuela para mostrar
         hora_utc = HORA_RECORDATORIOS
-        hora_venezuela = f"{int(hora_utc.split(':')[0]) - 4:02d}:{hora_utc.split(':')[1]}"
+        hora_utc_num = int(hora_utc.split(':')[0])
+        minuto = hora_utc.split(':')[1]
+        
+        # Venezuela es UTC-4, pero si la hora es menor a 4, necesitamos sumar 24
+        if hora_utc_num < 4:
+            hora_venezuela = f"{hora_utc_num + 20:02d}:{minuto}"
+        else:
+            hora_venezuela = f"{hora_utc_num - 4:02d}:{minuto}"
+            
         proximo_recordatorio = f"Mañana a las {hora_venezuela} (Venezuela)"
         
         mensaje = (
