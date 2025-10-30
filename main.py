@@ -483,7 +483,7 @@ async def main():
     global bot_global
     bot_global = bot  # Asignar bot global para el scheduler
     
-    logger.info("🔗 Verificando conexión con Telegram...")
+    logger.info("🔗 Verificando conexión con Telegram... (v2.1)")
     for intento in range(3):
         try:
             # Verificar que el bot funcione
