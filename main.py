@@ -28,7 +28,7 @@ if not TELEGRAM_TOKEN:
 AUTHORIZED_CHATS = ["6632759708", "-5061302808"]
 MOODLE_URL = "https://virtual.uvm.edu.ve/virtual/calendar/export_execute.php?userid=2007&authtoken=5be6f027de4a2016615289e3ef3cb40c425c14ab&preset_what=all&preset_time=recentupcoming"
 
-HORA_RECORDATORIOS = "13:00"
+HORA_RECORDATORIOS = "20:38"
 DIAS_RECORDATORIO = [5, 3, 2, 1]
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
