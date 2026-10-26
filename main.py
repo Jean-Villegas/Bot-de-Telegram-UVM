@@ -25,7 +25,7 @@ TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 if not TELEGRAM_TOKEN:
     raise ValueError("❌ Token de Telegram no encontrado. Configura la variable TELEGRAM_TOKEN como variable de entorno.")
 # Chats autorizados: tu chat personal + tu grupo
-AUTHORIZED_CHATS = ["6632759708", "-5061302808"]
+AUTHORIZED_CHATS = ["6632759708", "-5061302808", "-5402498106"]
 MOODLE_URL = "https://virtual.uvm.edu.ve/virtual/calendar/export_execute.php?userid=2007&authtoken=5be6f027de4a2016615289e3ef3cb40c425c14ab&preset_what=all&preset_time=recentupcoming"
 
 HORA_RECORDATORIOS = "17:00"  # 5:00 PM UTC = 1:00 PM Venezuela
